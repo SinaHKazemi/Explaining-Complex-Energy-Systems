@@ -1,4 +1,6 @@
 # file  -- Module.py --
+import pyomo.environ as pyo
+from pyomo.opt import SolverFactory
 
 def getSettings():
     """Return settingsDict with default settings for usage in an HouseModel class object"""
@@ -22,9 +24,6 @@ class HouseModel:
             self.Settings = settings_dict[0]
 
     def sample_model(self, input_changes=None, fixed_outputs=None):
-        import pyomo.environ as pyo
-        from pyomo.opt import SolverFactory
-
         # Step 0: Create an instance of the model
         model = pyo.ConcreteModel()
 

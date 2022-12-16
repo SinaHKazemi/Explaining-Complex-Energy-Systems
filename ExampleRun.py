@@ -12,7 +12,7 @@ def run():
     [Result, Status] = HousePVModel.sample_model()
 
     # The results can be read manually using the pyomo.environ class
-    import pyomo.environ as pyo
+    
     print("Demand at hour 123 of simulation: " + str(pyo.value(Result.Demand[123])) + " kWh")
 
     # read results via getKPI
@@ -45,5 +45,5 @@ def run():
     print("The total expenditures change by " + str(round(new_relative_changes["TOTEX"]*100, 2)) + "%.")
     print("The capital expenditures change by " + str(round(new_relative_changes["CAPEX"]*100, 2)) + "%.")
 
-    if __name__ == '__main__':
-        run()
+if __name__ == '__main__':
+    run()
