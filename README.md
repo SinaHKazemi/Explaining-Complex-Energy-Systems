@@ -10,24 +10,22 @@ The linear program can be found in **Model.py**.
 In **solverSettings.txt** the used solver and additional options can be defined. 
 An overview of ways to interact with the model is given in **ExampleRun.py**.
 
-## LP Model
-The linear program implemented in **Model.py** has the following minimization goal:
+## Quick Start
+1. install python 3.11
+2. build a new virtual environment and activate it
+```console
+> python -m venv env
+> env\Scripts\activate
+```
+3. install required packages
+```console
+> pip install -r requirements.txt
+```
+4. run main.py
+```console
+> python main.py
+```
 
-$\min\limits_{Cap,p} cost = c_{PV} \times Cap_{PV}  c_{battery} \times Cap_{battery}^S  \sum_{t} c_{buy}(t) \times p_{buy}(t)$
-
-The following restrictions are applied:
-
-<img src="https://render.githubusercontent.com/render/math?math=p_{buy}(t) %2B p_{PV}(t) %2B p_{battery}^{out}(t) - p_{battery}^{in}(t) = Demand(t), \forall t">
-
-<img src="https://render.githubusercontent.com/render/math?math=p_{battery}^{S}(t) = p_{battery}^{S}(t-1) %2B p_{battery}^{in}(t) \times \delta t - p_{battery}^{out}(t) \times \delta t , t \in 2,...,T">
-
-<img src="https://render.githubusercontent.com/render/math?math=0 \leq p_{PV}(t) \leq Cap_{PV} \times availibilty_{PV}(t) \times \delta t, \forall t">
-
-<img src="https://render.githubusercontent.com/render/math?math=0 \leq p_{battery}^{S}(t) \leq Cap_{battery}^S, \forall t">
-
-<img src="https://render.githubusercontent.com/render/math?math=p_{battery}^{S}(0) = p_{battery}^{S}(T)">
-  
-<img src="https://render.githubusercontent.com/render/math?math=0 \leq p_{buy}(t), \forall t">
 
 ## Time series
 * **Demand time series** - distribution of 8760 values that sum up to 1
@@ -36,5 +34,6 @@ The following restrictions are applied:
   * Data is for the city Darmstadt in Germany from [Renewables.ninja](https://www.renewables.ninja/)
 
 ## Authors
+* [Sina Hajikazemi](https://www.eins.tu-darmstadt.de/eins/team/sina-hajikazemi)
 * [Jonas H&uuml;lsmann](https://www.eins.tu-darmstadt.de/eins/team/jonas-huelsmann)
 * [Florian Steinke](https://www.eins.tu-darmstadt.de/eins/team/florian-steinke)
