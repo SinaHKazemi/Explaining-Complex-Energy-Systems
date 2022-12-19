@@ -13,7 +13,7 @@ An overview of ways to interact with the model is given in **ExampleRun.py**.
 ## LP Model
 The linear program implemented in **Model.py** has the following minimization goal:
 
-<img src="https://render.githubusercontent.com/render/math?math=\min\limits_{Cap,p} cost = c_{PV} \times Cap_{PV} %2B c_{battery} \times Cap_{battery}^S %2B \sum_{t} c_{buy}(t) \times p_{buy}(t)">
+$\min\limits_{Cap,p} cost = c_{PV} \times Cap_{PV}  c_{battery} \times Cap_{battery}^S  \sum_{t} c_{buy}(t) \times p_{buy}(t)$
 
 The following restrictions are applied:
 
