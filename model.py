@@ -27,6 +27,7 @@ class HouseModel():
         """        
         
         # Step 0: Create an instance of the model
+        self.settings = settings
         model = pyo.ConcreteModel()
         self.model = model
 
@@ -67,7 +68,7 @@ class HouseModel():
         # Step 4: Constraints
         model.con_limit_pv = pyo.ConstraintList()
         for i in T:
-            model.lcon_limit_pv.add(model.energy_PV[i] <= model.capacity_PV * PV_availability[i])  # PV Upper Limit
+            model.con_limit_pv.add(model.energy_PV[i] <= model.capacity_PV * PV_availability[i])  # PV Upper Limit
 
         model.con_limit_battery = pyo.ConstraintList()
         for i in T:
