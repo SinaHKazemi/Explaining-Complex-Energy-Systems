@@ -1,4 +1,5 @@
 import numpy as np
+import pyomo
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 
@@ -36,8 +37,8 @@ class HouseModel():
         model.T = T
 
         # Step 1.2: Parameters
-        Lifetime = settings["lifetime"]  # lifetime in years
-        Cost_PV = settings["cost_PV"] / Lifetime  # € / (lifetime * kW)
+        Lifetime = settings["Lifetime"]  # lifetime in years
+        Cost_PV = settings["Cost_PV"] / Lifetime  # € / (lifetime * kW)
         Cost_battery = settings["Cost_Battery"] / Lifetime  # € / (lifetime * kWh)
         Cost_buy = settings["Cost_buy"]  # € / kWh
         Demand_total = settings["Demand_total"]  # kWh
@@ -47,12 +48,12 @@ class HouseModel():
         # Electricity sector
         model.energy_PV = pyo.Var(T, within=pyo.NonNegativeReals)
         model.energy_battery = pyo.Var(T, within=pyo.NonNegativeReals)
-        model.energy_battery_IN = pyo.Var(T, within=pyo.NonNegativeReals)
-        model.energy_battery_OUT = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_battery_in = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_battery_out = pyo.Var(T, within=pyo.NonNegativeReals)
         model.energy_buy = pyo.Var(T, within=pyo.NonNegativeReals)
         model.capacity_PV = pyo.Var(within=pyo.NonNegativeReals)
         model.capacity_battery = pyo.Var(within=pyo.NonNegativeReals)
-        model.sell_energy = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_sell = pyo.Var(T, within=pyo.NonNegativeReals)
 
         model.delta_demand = pyo.Param(T, default=0, mutable=True)
 
@@ -61,7 +62,7 @@ class HouseModel():
             expr=Cost_PV * model.capacity_PV
             + Cost_buy * sum(model.energy_buy[i] for i in T)
             + Cost_battery * model.capacity_battery
-            - Sell_price * sum(model.sell_energy[i] for i in T),
+            - Sell_price * sum(model.energy_sell[i] for i in T),
             sense=pyo.minimize,
         )
 
@@ -89,11 +90,12 @@ class HouseModel():
                 + model.energy_battery_out[i]
                 - model.energy_battery_in[i]
                 + model.energy_PV[i]
-                - model.sell_energy[i]
+                - model.energy_sell[i]
             )  # Energy Equation
 
         # Write model to mps file
         # model.write(filename=r"model.mps", io_options={"symbolic_solver_labels": True})
+    
     def solve(self, solver_name = "cplex"):
         solver = SolverFactory(solver_name)
         solver_output = solver.solve(self.model)
@@ -105,6 +107,7 @@ class HouseModel():
             print("Termination Condition is Infeasible")
         else:
             # Something else is wrong
+            print("Solver Termination Condition: ", solver_output.solver.termination_condition)
             print("Solver Status:" ,  solver_output.solver.status)
 
     def set_delta_demand(self, values: dict[int,float]) -> None:
@@ -117,5 +120,14 @@ class HouseModel():
             self.model.delta_demand[key] = value
 
 
-    def get_output(self) -> dict[str, list[float]]:
-        return None
+    def get_output(self) -> dict[str, list[float] | float]:
+        output = {}
+        for v in self.model.component_objects(pyo.Var, active=True):
+            print(v)
+            output[str(v)] = {}
+            if v.index_set() is not pyomo.core.base.global_set._UnindexedComponent_set:
+                for j in v.index_set():
+                    output[str(v)][j] = pyo.value(v[j])
+            else:
+                output[str(v)] = pyo.value(v)
+        return output

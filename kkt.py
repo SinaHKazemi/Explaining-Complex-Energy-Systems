@@ -13,7 +13,7 @@ class BaseKKT(HouseModel):
 
         # dual feasibility constraints
         Cost_buy = self.settings["Cost_buy"]
-        Cost_sell = self.settings["Cost_sell"]
+        Sell_price = self.settings["Sell_price"]
 
         model.con_dual_energy_buy = pyo.ConstraintList()
         for i in model.T:
@@ -21,7 +21,7 @@ class BaseKKT(HouseModel):
         
         model.con_dual_energy_sell = pyo.ConstraintList()
         for i in model.T:
-            model.con_dual_energy_sell.add(model.dual_eq_demand[i] >= Cost_sell)
+            model.con_dual_energy_sell.add(model.dual_eq_demand[i] >= Sell_price)
         
         model.con_dual_energy_battery_out = pyo.ConstraintList()
         for i in model.T:
@@ -45,16 +45,16 @@ class NonlinearKKT(BaseKKT):
         super().__init__(settings, PV_availability, Demand)
         model = self.model
         Cost_buy = self.settings["Cost_buy"]
-        Cost_sell = self.settings["Cost_sell"]
+        Sell_price = self.settings["Sell_price"]
 
         # complementary slackness
         model.con_cs_dual_limit_PV = pyo.ConstraintList()
         for i in model.T:
-            model.con_cs_dual_limit_PV.add((- model.dual_limit_PV[i])*(model.capacity_PV[i]-model.energy_PV[i]) == 0)
+            model.con_cs_dual_limit_PV.add((- model.dual_limit_PV[i])*(model.capacity_PV-model.energy_PV[i]) == 0)
         
         model.con_cs_dual_limit_battery = pyo.ConstraintList()
         for i in model.T:
-            model.con_cs_dual_limit_battery.add((- model.dual_limit_battery[i])*(model.capacity_battery[i]-model.energy_battery[i]) == 0)
+            model.con_cs_dual_limit_battery.add((- model.dual_limit_battery[i])*(model.capacity_battery-model.energy_battery[i]) == 0)
         
         model.con_cs_energy_buy = pyo.ConstraintList()
         for i in model.T:
@@ -62,7 +62,7 @@ class NonlinearKKT(BaseKKT):
 
         model.con_cs_energy_sell = pyo.ConstraintList()
         for i in model.T:
-            model.con_cs_energy_sell.add(model.energy_sell[i]*(model.dual_eq_demand[i]-Cost_sell) == 0)
+            model.con_cs_energy_sell.add(model.energy_sell[i]*(model.dual_eq_demand[i]-Sell_price) == 0)
         
         model.con_cs_energy_battery_out = pyo.ConstraintList()
         for i in model.T:
@@ -85,8 +85,8 @@ class FortunyKKT(BaseKKT):
         super().__init__(settings, PV_availability, Demand)
         model = self.model
         Cost_buy = self.settings["Cost_buy"]
-        Cost_sell = self.settings["Cost_sell"]
-        M = float("inf") # it should be changed
+        Sell_price = self.settings["Sell_price"]
+        M = 10000 # it should be changed
 
         # Binary variables
         model.binary_dual_limit_PV = pyo.Var(model.T, within=pyo.Binary)
@@ -103,13 +103,13 @@ class FortunyKKT(BaseKKT):
         model.con_cs_dual_limit_PV_B = pyo.ConstraintList()
         for i in model.T:
             model.con_cs_dual_limit_PV_A.add((- model.dual_limit_PV[i]) <= M*model.binary_dual_limit_PV[i])
-            model.con_cs_dual_limit_PV_B.add((model.capacity_PV[i]-model.energy_PV[i]) <= M*(1-model.binary_dual_limit_PV[i]))
+            model.con_cs_dual_limit_PV_B.add((model.capacity_PV-model.energy_PV[i]) <= M*(1-model.binary_dual_limit_PV[i]))
         
         model.con_cs_dual_limit_battery_A = pyo.ConstraintList()
         model.con_cs_dual_limit_battery_B = pyo.ConstraintList()
         for i in model.T:
             model.con_cs_dual_limit_battery_A.add((- model.dual_limit_battery[i]) <= M*model.binary_dual_limit_battery[i])
-            model.con_cs_dual_limit_battery_B.add( model.capacity_battery[i]-model.energy_battery[i] <= M*(1-model.binary_dual_limit_battery[i]) )
+            model.con_cs_dual_limit_battery_B.add( model.capacity_battery-model.energy_battery[i] <= M*(1-model.binary_dual_limit_battery[i]) )
         
         model.con_cs_energy_buy_A = pyo.ConstraintList()
         model.con_cs_energy_buy_B = pyo.ConstraintList()
@@ -121,7 +121,7 @@ class FortunyKKT(BaseKKT):
         model.con_cs_energy_sell_B = pyo.ConstraintList()
         for i in model.T:
             model.con_cs_energy_sell_A.add(model.energy_sell[i] <= M*model.binary_energy_sell[i])
-            model.con_cs_energy_sell_B.add((model.dual_eq_demand[i]-Cost_sell) <= M*(1-model.binary_energy_sell[i]))
+            model.con_cs_energy_sell_B.add((model.dual_eq_demand[i]-Sell_price) <= M*(1-model.binary_energy_sell[i]))
 
         model.con_cs_energy_battery_out_A = pyo.ConstraintList()
         model.con_cs_energy_battery_out_B = pyo.ConstraintList()
@@ -138,8 +138,8 @@ class FortunyKKT(BaseKKT):
         model.con_cs_energy_battery_A = pyo.ConstraintList()
         model.con_cs_energy_battery_B = pyo.ConstraintList()
         for i in model.T:
-            model.con_cs_energy_battery_A.add(model.energy_battery[i] <= M*model.binary_eneregy_battery[i])
-            model.con_cs_energy_battery_B.add((model.dual_eq_battery[i] - model.dual_limit_battery[i]) <= M*(1-model.binary_eneregy_battery[i]))
+            model.con_cs_energy_battery_A.add(model.energy_battery[i] <= M*model.binary_energy_battery[i])
+            model.con_cs_energy_battery_B.add((model.dual_eq_battery[i] - model.dual_limit_battery[i]) <= M*(1-model.binary_energy_battery[i]))
         
         model.con_cs_energy_PV_A = pyo.ConstraintList()
         model.con_cs_energy_PV_B = pyo.ConstraintList()
