@@ -12,6 +12,7 @@ An overview of ways to interact with the model is given in **ExampleRun.py**.
 
 ## Quick Start
 1. install python 3.11
+2. install one LP solver compatible with pyomo (Cplex for example)
 2. build a new virtual environment and activate it
 ```console
 > python -m venv env
@@ -36,4 +37,5 @@ An overview of ways to interact with the model is given in **ExampleRun.py**.
 ## Authors
 * [Sina Hajikazemi](https://www.eins.tu-darmstadt.de/eins/team/sina-hajikazemi)
 * [Jonas H&uuml;lsmann](https://www.eins.tu-darmstadt.de/eins/team/jonas-huelsmann)
+* [Pascal Uetz](https://www.linkedin.com/in/pascal-uetz/?originalSubdomain=de)
 * [Florian Steinke](https://www.eins.tu-darmstadt.de/eins/team/florian-steinke)
