@@ -31,7 +31,8 @@ class HouseModel():
         self.model = model
 
         # Step 1.1: Define index sets
-        time = range(8760) # hours in one year
+        T = range(8760) # hours in one year
+        model.T = T
 
         # Step 1.2: Parameters
         Lifetime = settings["lifetime"]  # lifetime in years
@@ -43,45 +44,45 @@ class HouseModel():
 
         # Step 2: Define the decision variables
         # Electricity sector
-        model.energy_PV = pyo.Var(time, within=pyo.NonNegativeReals)
-        model.energy_battery = pyo.Var(time, within=pyo.NonNegativeReals)
-        model.energy_battery_IN = pyo.Var(time, within=pyo.NonNegativeReals)
-        model.energy_battery_OUT = pyo.Var(time, within=pyo.NonNegativeReals)
-        model.energy_buy = pyo.Var(time, within=pyo.NonNegativeReals)
+        model.energy_PV = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_battery = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_battery_IN = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_battery_OUT = pyo.Var(T, within=pyo.NonNegativeReals)
+        model.energy_buy = pyo.Var(T, within=pyo.NonNegativeReals)
         model.capacity_PV = pyo.Var(within=pyo.NonNegativeReals)
         model.capacity_battery = pyo.Var(within=pyo.NonNegativeReals)
-        model.sell_energy = pyo.Var(time, within=pyo.NonNegativeReals)
+        model.sell_energy = pyo.Var(T, within=pyo.NonNegativeReals)
 
-        model.delta_demand = pyo.Param(time, default=0, mutable=True)
+        model.delta_demand = pyo.Param(T, default=0, mutable=True)
 
         # Step 3: Define objective
         model.cost = pyo.Objective(
             expr=Cost_PV * model.capacity_PV
-            + Cost_buy * sum(model.energy_buy[i] for i in time)
+            + Cost_buy * sum(model.energy_buy[i] for i in T)
             + Cost_battery * model.capacity_battery
-            - Sell_price * sum(model.sell_energy[i] for i in time),
+            - Sell_price * sum(model.sell_energy[i] for i in T),
             sense=pyo.minimize,
         )
 
         # Step 4: Constraints
-        model.limEQpv = pyo.ConstraintList()
-        for i in time:
-            model.lim_eq_PV.add(model.energy_PV[i] <= model.capacity_PV * PV_availability[i])  # PV Upper Limit
+        model.con_limit_pv = pyo.ConstraintList()
+        for i in T:
+            model.lcon_limit_pv.add(model.energy_PV[i] <= model.capacity_PV * PV_availability[i])  # PV Upper Limit
 
-        model.limEQbat = pyo.ConstraintList()
-        for i in time:
-            model.limEQbat.add(model.energy_battery[i] <= model.capacity_battery)  # Battery Upper Limit
+        model.con_limit_battery = pyo.ConstraintList()
+        for i in T:
+            model.con_limit_battery.add(model.energy_battery[i] <= model.capacity_battery)  # Battery Upper Limit
 
-        model.batteryEQ = pyo.ConstraintList()
-        for i in time:
-            model.batteryEQ.add(
+        model.con_eq_battery = pyo.ConstraintList()
+        for i in T:
+            model.con_eq_battery.add(
                 expr=model.energy_battery[i]
-                == model.energy_battery[time[i - 1]] - model.energy_battery_out[i] + model.energy_battery_in[i]
+                == model.energy_battery[T[i - 1]] - model.energy_battery_out[i] + model.energy_battery_in[i]
             )  # Battery Equation
 
-        model.EnergyEQ = pyo.ConstraintList()
-        for i in time:
-            model.EnergyEQ.add(
+        model.con_eq_energy = pyo.ConstraintList()
+        for i in T:
+            model.con_eq_energy.add(
                 expr=Demand_total  * (Demand[i] + model.delta_demand[i])
                 == model.energy_buy[i]
                 + model.energy_battery_out[i]
