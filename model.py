@@ -2,23 +2,30 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 
-
 # configure the parameters of the original pv house model
-def getSettings():
-    settingsDict = {
-        "Lifetime": 10,  # Years
-        "Cost_PV": 1000,  # €/kW
-        "Cost_Battery": 300,  # €/kWh
-        "Cost_buy": 0.25,  # €/kWh
-        "Sell_price": 0.05,  # €/kWh
-        "Demand_total": 3500,  # kWh/Year
-    }
-    return settingsDict
+Default_Settings = {
+    "Lifetime": 10,  # Years
+    "Cost_PV": 1000,  # €/kW
+    "Cost_Battery": 300,  # €/kWh
+    "Cost_buy": 0.25,  # €/kWh
+    "Sell_price": 0.05,  # €/kWh
+    "Demand_total": 3500,  # kWh/Year
+}
 
 
 # create HouseModel
 class HouseModel():
     def __init__(self, settings: dict[str, int|float], PV_availability: list[float], Demand: list[float]):
+        """_summary_
+
+        :param settings: _description_
+        :type settings: dict[str, int | float]
+        :param PV_availability: _description_
+        :type PV_availability: list[float]
+        :param Demand: _description_
+        :type Demand: list[float]
+        """        
+        
         # Step 0: Create an instance of the model
         model = pyo.ConcreteModel()
         self.model = model
@@ -44,6 +51,8 @@ class HouseModel():
         model.capacity_PV = pyo.Var(within=pyo.NonNegativeReals)
         model.capacity_battery = pyo.Var(within=pyo.NonNegativeReals)
         model.sell_energy = pyo.Var(time, within=pyo.NonNegativeReals)
+
+        model.delta_demand = pyo.Param(time, default=0, mutable=True)
 
         # Step 3: Define objective
         model.cost = pyo.Objective(
@@ -73,7 +82,7 @@ class HouseModel():
         model.EnergyEQ = pyo.ConstraintList()
         for i in time:
             model.EnergyEQ.add(
-                expr=Demand_total  * Demand[i]
+                expr=Demand_total  * (Demand[i] + model.delta_demand[i])
                 == model.energy_buy[i]
                 + model.energy_battery_out[i]
                 - model.energy_battery_in[i]
@@ -96,5 +105,15 @@ class HouseModel():
             # Something else is wrong
             print("Solver Status:" ,  solver_output.solver.status)
 
-    def get_output(self):
+    def set_delta_demand(self, values: dict[int,float]) -> None:
+        """_summary_
+
+        :param values: _description_
+        :type values: dict[int,float]
+        """
+        for key,value in values.items():
+            self.model.delta_demand[key] = value
+
+
+    def get_output(self) -> dict[str, list[float]]:
         return None
