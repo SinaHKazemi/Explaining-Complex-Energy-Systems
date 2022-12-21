@@ -32,14 +32,17 @@ class HouseModel():
         model = pyo.ConcreteModel()
         self.model = model
 
+        PV_availability = PV_availability[0:720]
+        Demand = Demand[0:720]
+
         # Step 1.1: Define index sets
-        T = range(8760) # hours in one year
+        T = range(720) # hours in one year
         model.T = T
 
         # Step 1.2: Parameters
         Lifetime = settings["Lifetime"]  # lifetime in years
         Cost_PV = settings["Cost_PV"] / Lifetime  # € / (lifetime * kW)
-        Cost_battery = settings["Cost_Battery"] / Lifetime  # € / (lifetime * kWh)
+        Cost_battery = settings["Cost_battery"] / Lifetime  # € / (lifetime * kWh)
         Cost_buy = settings["Cost_buy"]  # € / kWh
         Demand_total = settings["Demand_total"]  # kWh
         Sell_price = settings["Sell_price"]  # € / kWh
@@ -59,11 +62,12 @@ class HouseModel():
 
         # Step 3: Define objective
         model.cost = pyo.Objective(
-            expr=Cost_PV * model.capacity_PV
-            + Cost_buy * sum(model.energy_buy[i] for i in T)
-            + Cost_battery * model.capacity_battery
-            - Sell_price * sum(model.energy_sell[i] for i in T),
-            sense=pyo.minimize,
+            # expr=Cost_PV * model.capacity_PV
+            # + Cost_buy * sum(model.energy_buy[i] for i in T)
+            # + Cost_battery * model.capacity_battery
+            # - Sell_price * sum(model.energy_sell[i] for i in T),
+            expr =  Cost_battery * model.capacity_battery,
+            sense=pyo.maximize,
         )
 
         # Step 4: Constraints
@@ -122,10 +126,10 @@ class HouseModel():
 
     def get_output(self) -> dict[str, list[float] | float]:
         output = {}
+        print(pyo.value(self.model.cost))
         for v in self.model.component_objects(pyo.Var, active=True):
-            print(v)
-            output[str(v)] = {}
-            if v.index_set() is not pyomo.core.base.global_set._UnindexedComponent_set:
+            if type(v.index_set()) is not pyomo.core.base.global_set._UnindexedComponent_set:
+                output[str(v)] = {}
                 for j in v.index_set():
                     output[str(v)][j] = pyo.value(v[j])
             else:
