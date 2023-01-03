@@ -1,3 +1,4 @@
 pyomo
 numpy
 matplotlib
+pydantic

@@ -2,6 +2,11 @@ import numpy as np
 import pyomo
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
+from pydantic import BaseModel
+
+class Output(BaseModel):
+    objective: float
+    variables: dict[str, float]
 
 class Settings:
     def __init__(self, Lifetime, Price_PV, Price_battery, Cost_buy, Sell_price, Demand_total):
@@ -140,4 +145,4 @@ class HouseModel():
                     output["variable"][str(v)][j] = pyo.value(v[j])
             else:
                 output["variable"][str(v)] = pyo.value(v)
-        return output
+        return Output(output["objective"], output["variables"])
