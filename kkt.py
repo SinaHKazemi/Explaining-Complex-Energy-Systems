@@ -1,9 +1,8 @@
 from model import HouseModel, Settings
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
-import pyomo
 
-class BaseKKT(HouseModel):
+class DualModel(HouseModel):
     def __init__(self, settings: Settings, PV_availability: list[float], Demand: list[float]):
         super().__init__(settings, PV_availability, Demand)
         model = self.model
@@ -13,7 +12,6 @@ class BaseKKT(HouseModel):
         model.dual_limit_PV = pyo.Var(model.T, within=pyo.NonPositiveReals)
         model.dual_eq_battery = pyo.Var(model.T, within=pyo.Reals)
         model.dual_eq_demand = pyo.Var(model.T, within=pyo.Reals)
-        model.dual_obj = pyo.Var(within = pyo.Reals)
 
         # dual feasibility constraints
 
@@ -47,7 +45,7 @@ class BaseKKT(HouseModel):
         model.con_dual_capacity_battery = pyo.Constraint(expr = - sum(model.dual_limit_battery[i] for i in model.T) <= settings.Cost_battery)
         model.con_dual_capacity_PV = pyo.Constraint(expr = - sum(model.dual_limit_PV[i] * PV_availability[i] for i in model.T) <= settings.Cost_PV)
     
-class NonlinearKKT(BaseKKT):
+class NonlinearKKT(DualModel):
     def __init__(self, settings: Settings, PV_availability: list[float], Demand: list[float]):
         super().__init__(settings, PV_availability, Demand)
         model = self.model
@@ -88,7 +86,7 @@ class NonlinearKKT(BaseKKT):
         model.con_cs_capacity_battery = pyo.Constraint(expr = (settings.Cost_battery + sum(model.dual_limit_battery[i] for i in model.T))(model.capacity_battery) == 0)
         model.con_cs_capacity_PV = pyo.Constraint(expr = (settings.Cost_PV + sum(model.dual_limit_PV[i] * PV_availability[i] for i in model.T))(model.capacity_PV) == 0)
 
-class FortunyKKT(BaseKKT):
+class BigM_KKT(DualModel):
     def __init__(self, settings: Settings, PV_availability: list[float], Demand: list[float]):
         super().__init__(settings, PV_availability, Demand)
         model = self.model
